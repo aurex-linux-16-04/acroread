@@ -1,0 +1,9 @@
+#Partner packages belong in /opt
+acroread: dir-or-file-in-opt
+#Partner packages may embed/bundle libs, fonts, etc...
+acroread: embedded-library
+acroread: font-in-non-font-package
+#Bundled libs are not intended for use by other packages
+acroread: shared-lib-without-dependency-information
+#partner prefix is required for proper processing
+acroread: unknown-section partner/text

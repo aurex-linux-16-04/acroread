@@ -1,0 +1,195 @@
+#!/bin/sh
+
+MkTempInternal()
+{
+    if [ "${mktemp_count+set}" != "set" ]; then
+        mktemp_count="0"
+    fi
+
+    mktemp_file="/tmp/acrobat.$$.${mktemp_count}"
+
+    while test -e "$mktemp_file"
+    do
+        mktemp_count="`expr $mktemp_count + 1`"
+        mktemp_file="/tmp/acrobat.$$.${mktemp_count}"
+    done
+
+    touch "$mktemp_file" && chmod 600 "$mktemp_file" && echo "$mktemp_file"
+}
+
+MkTemp()
+{
+    template="tmp.XXXXXXXXXX";
+    MKTEMP="`which mktemp 2>/dev/null`";
+    if [ "$MKTEMP" != "" ]; then
+	    :
+    else
+	    MKTEMP="MkTempInternal";
+    fi
+
+    $MKTEMP /tmp/acrobat.$template
+}
+
+
+remove()
+{
+    file="$@"
+
+    if [ -d "$file" ]; then
+        rmdir "$file"
+    else
+        rm -f "$file"
+    fi
+}
+
+
+uninstall_icon()
+{
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-icon-resource uninstall "$@" >/dev/null 2>&1
+}
+
+
+uninstall_desktop_menu()
+{
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-desktop-menu uninstall "$@" >/dev/null 2>&1
+}
+
+
+uninstall_desktop_icon()
+{
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-desktop-icon uninstall "$@" >/dev/null 2>&1
+}
+
+
+uninstall_mime()
+{
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-mime uninstall "$@" >/dev/null 2>&1
+}
+
+unset_mime()
+{
+    for i in application/pdf application/vnd.adobe.xfdf application/vnd.fdf application/vnd.adobe.xdp+xml application/vnd.adobe.pdx application/fdf application/xdp application/xfdf application/pdx; do
+        PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH:/usr/ucb" xdg-mime unset "$@" "${i}"
+    done
+}
+
+
+UnInstallIcons()
+{
+    install_dir="$1/Adobe/Reader9/Resource/Icons"
+
+    for icon_size in 16 22 24 32 48 64 128; do
+        uninstall_icon --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/AdobeReader9.png"
+        uninstall_icon --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/adobe.pdf.png"
+        uninstall_icon --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/adobe.pdf.png" 'application-pdf'
+        uninstall_icon --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.fdf.png"
+        uninstall_icon --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.fdf.png" 'application-fdf'
+        uninstall_icon --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.pdx.png"
+        uninstall_icon --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.pdx.png" 'application-pdx'
+        uninstall_icon --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xdp+xml.png"
+        uninstall_icon --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xdp+xml.png" 'application-xdp+xml'
+        uninstall_icon --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xfdf.png"
+        uninstall_icon --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xfdf.png" 'application-xfdf'
+    done
+}
+
+
+TrimSpaces()
+{
+    OLD_IFS_Trim_Spaces="$IFS"
+    IFS=' '
+    echo $@
+    IFS="$OLD_IFS_Trim_Spaces"
+}
+
+
+ProcessConfigFile()
+{
+    OLD_IFS_ProcessConfigFile="$IFS"
+    config_file="$1"
+
+    IFS=' '
+    cat "$config_file" | grep -v "^[ ]*#" | \
+    while read op args
+    do
+        op="`TrimSpaces $op`"
+
+        case "$op" in
+            remove | uninstall_icon | uninstall_desktop_menu | uninstall_mime)
+                "$op" $args 2>/dev/null ;;
+        esac
+    done
+
+    IFS="$OLD_IFS_ProcessConfigFile"
+}
+
+
+UnInstallReader()
+{
+    ReadInstallDir="$1"
+    config_file="$ReadInstallDir/Adobe/Reader9/Reader/GlobalPrefs/.config"
+    UnInstallIcons "$ReadInstallDir"
+    #uninstall_desktop_menu --novendor "$ReadInstallDir/Adobe/Reader9/Resource/Support/AdobeReader.desktop"
+    #uninstall_desktop_icon --novendor "$ReadInstallDir/Adobe/Reader9/Resource/Support/AdobeReader.desktop"
+    unset_mime "acroread.desktop"
+    if [ -e /usr/share/applications/evince.desktop ]; then
+    	PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-mime default "evince.desktop" "application/pdf" >/dev/null 2>&1
+    fi
+
+
+    if [ -f "$config_file" ]; then
+        ProcessConfigFile "$config_file"
+        rm -f "$config_file"
+    fi
+
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-icon-resource forceupdate >/dev/null 2>&1
+    #rm -f /usr/bin/acroread
+    #rm -f /usr/share/man/man1/acroread.1.gz
+    #rm -f /etc/bash_completion.d/acroread
+    
+    ## kill synchronizerapp
+    tmpfile="`MkTemp`"
+    ps -ef 2>/dev/null > "$tmpfile"
+    
+    synchronizerapp_pid="`awk '{ print $8, $2 }' < "$tmpfile" | grep -w "^$ReadInstallDir/Adobe/Reader9/Reader/intellinux/SynchronizerApp" | awk '{ print $NF; exit }'`"
+    
+    if [ -z "$synchronizerapp_pid" ]; then
+        ps auwwwxg 2>/dev/null > "$tmpfile"
+        synchronizerapp_pid="`awk '{ print $11, $2 }' < "$tmpfile" | grep -w "^$ReadInstallDir/Adobe/Reader9/Reader/intellinux/SynchronizerApp" | awk '{ print $NF; exit }'`"
+    
+        if [ -z "$synchronizerapp_pid" ]; then
+            rm -f "$tmpfile"
+            exit 0
+        fi
+    fi
+    
+    rm -f "$tmpfile"
+    
+    if [ -n "$synchronizerapp_pid" ]; then
+        kill -KILL "$synchronizerapp_pid"
+    fi
+}
+
+
+case "$1" in
+    purge|remove|upgrade)
+
+        if [ `lsb_release -a |grep Release |awk -F" " '{print $2}'` != "8.04" ]; then
+		if [ `uname -m | cut -c 1` != "i" ]; then
+			nspluginwrapper -r /usr/lib/nspluginwrapper/plugins/npwrapper.nppdf.so
+		fi
+	fi
+
+        ReadInstallDir="/opt"
+        UnInstallReader "$ReadInstallDir" 2>/dev/null
+    ;;
+
+    failed-upgrade|abort-install|abort-upgrade|disappear)
+    ;;
+
+    *)
+        echo "postrm called with unknown argument \`$1'" >&2
+        exit 0
+esac
+
+#DEBHELPER#

@@ -1,0 +1,107 @@
+Source: acroread
+Section: partner/text
+Priority: extra
+Maintainer: Brian Thomason <brian.thomason@canonical.com>
+Build-Depends:	debhelper (>= 5),
+		bzip2,
+		libgtk2.0-0,
+		libglib2.0-0,
+		libxml2,
+		libxt6,
+		libidn11,
+		libatk1.0-0,
+		libfontconfig1,
+		libpango1.0-0,
+		libx11-6,
+		libxext6,
+		zlib1g,
+		libgdk-pixbuf2.0-0,
+		libstdc++6
+Standards-Version: 3.9.2
+
+Package: acroread
+Architecture: i386 amd64
+Depends: ${misc:Depends},
+	acroread-bin,
+	nspluginwrapper [amd64]
+Description: Adobe Reader
+ Adobe Reader allows you to view navigate and print PDF files. This version
+ adds advanced forms support (save), better integration with Adobe Acrobat
+ workflows, customizable toolbars and better overall performance.
+ .
+ This package provides the English version of Adobe Reader 9.
+
+Package: acroread-bin
+Architecture: i386
+Multi-Arch: foreign
+Depends: ${shlibs:Depends},
+	${misc:Depends},
+	lsb-release,
+	debconf
+Conflicts: acroread-debian-files
+Breaks: acroread (<< 9.5.4),
+	adobereader-deu (<< 9.5.4),
+	adobereader-fra (<< 9.5.4),
+	adobereader-jpn (<< 9.5.4),
+	acroread-common (<< 9.5.4)
+Replaces: acroread-debian-files,
+	acroread,
+	adobereader-deu,
+	adobereader-fra,
+	adobereader-jpn,
+	acroread-common
+Provides: pdf-viewer, adobereader-enu
+Suggests: libldap2, libgnome-speech7
+Description: Adobe Reader
+ Adobe Reader allows you to view navigate and print PDF files. This version
+ adds advanced forms support (save), better integration with Adobe Acrobat
+ workflows, customizable toolbars and better overall performance.
+ .
+ This package provides the binary files for the English version of
+ Adobe Reader 9.
+
+Package: adobereader-deu
+Architecture: i386 amd64
+Depends: ${misc:Depends},
+	acroread
+Provides: acroread-deu
+Description: Adobe Reader
+ Adobe Reader allows you to view navigate and print PDF files. This version
+ adds advanced forms support (save), better integration with Adobe Acrobat
+ workflows, customizable toolbars and better overall performance.
+ .
+ This is a transitional package and can be safely removed
+
+Package: adobereader-fra
+Architecture: i386 amd64
+Depends: ${misc:Depends},
+	acroread
+Provides: acroread-fra
+Description: Adobe Reader
+ Adobe Reader allows you to view navigate and print PDF files. This version
+ adds advanced forms support (save), better integration with Adobe Acrobat
+ workflows, customizable toolbars and better overall performance.
+ .
+ This is a transitional package and can be safely removed
+
+Package: adobereader-jpn
+Architecture: i386 amd64
+Depends: ${misc:Depends},
+	acroread
+Provides: acroread-jpn
+Description: Adobe Reader
+ Adobe Reader allows you to view navigate and print PDF files. This version
+ adds advanced forms support (save), better integration with Adobe Acrobat
+ workflows, customizable toolbars and better overall performance.
+ .
+ This is a transitional package and can be safely removed
+
+Package: acroread-common
+Architecture: all
+Depends: ${misc:Depends}
+Description: Adobe Reader - Common Files
+ Adobe Reader allows you to view navigate and print PDF files. This version
+ adds advanced forms support (save), better integration with Adobe Acrobat
+ workflows, customizable toolbars and better overall performance.
+ .
+ This is a transitional package and can be safely removed

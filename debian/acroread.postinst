@@ -1,0 +1,201 @@
+#!/bin/sh
+
+
+Which()
+{
+    OLD_IFS="$IFS"
+    IFS=':'
+
+    if [ -z "$1" ]; then
+        return 1
+    fi
+
+    for x in $PATH
+    do
+        if [ -x "$x/$1" ]; then
+            echo "$x/$1"
+            IFS="$OLD_IFS"
+            return 0
+        fi
+    done
+
+    IFS="$OLD_IFS"
+    return 1
+}
+
+
+record_config()
+{
+    config_file="$ReadInstallDir/Adobe/Reader9/Reader/GlobalPrefs/.config"
+    echo "$@" >> "$config_file"
+}
+
+
+install_icon()
+{
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-icon-resource install "$@" >/dev/null 2>&1
+}
+
+
+install_desktop_menu()
+{
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-desktop-menu uninstall --mode system "$@" >/dev/null 2>&1
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-desktop-menu uninstall --mode user "$@" >/dev/null 2>&1
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-desktop-menu install "$@" >/dev/null 2>&1
+}
+
+
+install_desktop_icon()
+{
+    eval desktop_file="\$$#"
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-desktop-icon uninstall "$@" >/dev/null 2>&1
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-desktop-icon install "$@" >/dev/null 2>&1 && chmod 777 "$HOME/Desktop/`basename "$desktop_file"`" 2>/dev/null
+}
+
+
+install_mime()
+{
+    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-mime install "$@" >/dev/null 2>&1
+}
+
+
+InstallIcons()
+{
+    install_dir="$1/Adobe/Reader9/Resource/Icons"
+
+    for icon_size in 16 20 22 24 32 36 48 64 96 128 192; do
+        install_icon --noupdate --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/AdobeReader9.png"
+        install_icon --noupdate --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/adobe.pdf.png"
+        install_icon --noupdate --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/adobe.pdf.png" 'application-pdf'
+        install_icon --noupdate --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.fdf.png"
+        install_icon --noupdate --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.fdf.png" 'application-fdf'
+        install_icon --noupdate --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.pdx.png"
+        install_icon --noupdate --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.pdx.png" 'application-pdx'
+        install_icon --noupdate --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xdp+xml.png"
+        install_icon --noupdate --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xdp+xml.png" 'application-xdp+xml'
+        install_icon --noupdate --novendor --context apps --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xfdf.png"
+        install_icon --noupdate --novendor --context mimetypes --size $icon_size "$install_dir/${icon_size}x${icon_size}/vnd.adobe.xfdf.png" 'application-xfdf'
+    done
+}
+
+MakeLibLDAPLinks()
+{
+    install_dir="$1/Adobe/Reader9/Reader"
+
+    rm -f "$install_dir/intellinux/lib/libldap.so"
+    if [ ! -e /usr/lib/libldap.so ]
+    then
+    	LIB_LDAP="`ls -tr /usr/lib/libldap.so*  2>/dev/null | tail -n 1`"
+
+    	if [ "$LIB_LDAP" = "" ] 
+	    then
+		    LIB_LDAP="`ls -tr /usr/lib/libldap* 2>/dev/null | grep -v libldap_r | grep -v libldapcpp | grep '\.so' | tail -n 1`"
+    	fi
+
+	    if [ "$LIB_LDAP" != "" ] 
+       	then
+    		ln -s "$LIB_LDAP" "$install_dir/intellinux/lib/libldap.so"
+	    fi
+    fi
+
+    rm -f "$install_dir/intellinux/lib/liblber.so"
+    if [ ! -e /usr/lib/liblber.so ]
+    then
+    	LIB_LBER="`ls -tr /usr/lib/liblber.so* 2>/dev/null | tail -n 1`"
+
+    	if [ "$LIB_LBER" = "" ] 
+    	then
+	    	LIB_LBER="`ls -tr /usr/lib/liblber* 2>/dev/null | grep -v liblber_r | grep '\.so' | tail -n 1`"
+    	fi
+
+    	if [ "$LIB_LBER" != "" ] 
+	    then
+    		ln -s "$LIB_LBER" "$install_dir/intellinux/lib/liblber.so"
+	    fi
+    fi
+}
+
+
+MakeLibGnomeSpeechLinks()
+{
+    install_dir="$1/Adobe/Reader9/Reader"
+    configured_dir="$2"
+    lib_dir="$install_dir/$configured_dir/lib"
+
+    if TESTSPEECHEXEC="`which test-speech`" && which ldd >/dev/null && which awk >/dev/null; then
+        rm -f "$lib_dir/libORBit-2.so" 2>/dev/null
+        rm -f "$lib_dir/libbonobo-2.so" 2>/dev/null
+        rm -f "$lib_dir/libbonobo-activation.so" 2>/dev/null
+        rm -f "$lib_dir/libgnomespeech.so" 2>/dev/null
+
+        lib_orbit2="`ldd $TESTSPEECHEXEC 2>/dev/null | grep -i libORBit-2.* | cut -d '>' -f2 | cut -d '(' -f 1 |awk '{print $1}' `"
+        lib_bonobo="`ldd $TESTSPEECHEXEC 2>/dev/null | grep -i bonobo-2.* | cut -d '>' -f2 | cut -d '(' -f 1 |awk '{print $1}' `"
+        lib_bonoboactivation="`ldd $TESTSPEECHEXEC 2>/dev/null | grep -i bonobo-activation.* | cut -d '>' -f2 | cut -d '(' -f 1 |awk '{print $1}' `"
+        lib_gnomespeech="`ldd $TESTSPEECHEXEC 2>/dev/null | grep -i libgnomespeech.* | cut -d '>' -f2 | cut -d '(' -f 1 |awk '{print $1}' `"
+
+        if [ -f "$lib_orbit2" -a -f "$lib_bonobo" -a -f "$lib_bonoboactivation" -a -f "$lib_gnomespeech" ]; then
+            ln -s "$lib_orbit2" "$lib_dir/libORBit-2.so" && record_config remove "$lib_dir/libORBit-2.so"
+            ln -s "$lib_bonobo" "$lib_dir/libbonobo-2.so" && record_config remove "$lib_dir/libbonobo-2.so"
+            ln -s "$lib_bonoboactivation" "$lib_dir/libbonobo-activation.so" && record_config remove "$lib_dir/libbonobo-activation.so"
+            ln -s "$lib_gnomespeech" "$lib_dir/libgnomespeech.so" && record_config remove "$lib_dir/libgnomespeech.so"
+        fi
+    fi
+}
+
+case "$1" in
+    configure)
+        ReadInstallDir="/opt"
+        MakeLibGnomeSpeechLinks "$ReadInstallDir" intellinux 2>/dev/null
+        MakeLibLDAPLinks "$ReadInstallDir" 2>/dev/null
+
+        #rm -f /usr/bin/acroread 2>/dev/null
+        #ln -s "$ReadInstallDir/Adobe/Reader9/bin/acroread" /usr/bin/acroread 2>/dev/null
+
+        #rm -f /etc/bash_completion.d/acroread.sh 2>/dev/null
+        #ln -s "$ReadInstallDir/Adobe/Reader9/Resource/Shell/acroread_tab" /etc/bash_completion.d/acroread.sh 2>/dev/null
+
+        #rm -f /usr/share/man/man1/acroread.1.gz 2>/dev/null
+        #ln -s "$ReadInstallDir/Adobe/Reader9/Resource/Shell/acroread.1.gz" /usr/share/man/man1/acroread.1.gz 2>/dev/null
+
+        InstallIcons "$ReadInstallDir"
+        #Canonical does not want us to associate MIME types because they say they do it themselves.
+        #install_mime --novendor "$ReadInstallDir/Adobe/Reader9/Resource/Support/AdobeReader.xml"
+
+        #install_desktop_menu --novendor "$ReadInstallDir/Adobe/Reader9/Resource/Support/AdobeReader.desktop"
+        #Canonical does not want a Desktop icon.
+        #install_desktop_icon --novendor "$ReadInstallDir/Adobe/Reader9/Resource/Support/AdobeReader.desktop"
+
+        PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-icon-resource forceupdate >/dev/null 2>&1
+
+        if [ `lsb_release -a |grep Release |awk -F" " '{print $2}'` != "8.04" ]; then
+		if [ `uname -m | cut -c 1` = "i" ]; then
+        		"$ReadInstallDir/Adobe/Reader9/Browser/install_browser_plugin" -silent -global "$ReadInstallDir" >/dev/null 2>&1
+		else
+			nspluginwrapper -i /opt/Adobe/Reader9/Browser/intellinux/nppdf.so
+		fi
+	fi
+
+	. /usr/share/debconf/confmodule
+	db_version 2.0
+
+	db_get acroread-common/default-viewer
+
+	if [ "$RET" = "true" ]; then
+		if [ -e /etc/gnome/defaults.list ]; then
+        		for i in application/pdf application/vnd.adobe.xfdf application/vnd.fdf application/vnd.adobe.xdp+xml application/vnd.adobe.pdx application/fdf application/xdp application/xfdf application/pdx; do
+        		    PATH="$ReadInstallDir/Adobe/Reader9/Reader/intellinux/bin:$PATH" xdg-mime default "acroread.desktop" "$i" >/dev/null 2>&1
+        		done
+		fi
+	fi
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 0
+    ;;
+esac
+
+#DEBHELPER#

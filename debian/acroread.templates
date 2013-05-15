@@ -1,0 +1,6 @@
+Template: acroread-common/default-viewer
+Type: boolean
+Default: true
+Description: Set Adobe Reader as the default PDF Viewer?
+ This will set Adobe Reader as the default PDF Viewer for the system but
+ will not override any per-user settings.

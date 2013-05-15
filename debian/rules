@@ -1,0 +1,60 @@
+#!/usr/bin/make -f
+
+FILENAME	:= AdbeRdr9.5.5-1_i386linux_enu.deb
+
+configure: configure-stamp
+configure-stamp:
+	dh_testdir
+	touch configure-stamp
+
+
+build: build-stamp
+
+build-stamp: configure-stamp
+	dh_testdir
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp configure-stamp
+	rm -rf $(CURDIR)/build
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+	# Add here commands to install the package into debian/acroread-bin.
+	dpkg -x $(FILENAME) $(CURDIR)/debian/acroread-bin; \
+	{ rm $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/bin/acroread; awk 'NR==6{print "export UBUNTU_MENUPROXY=0"}1' > $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/bin/acroread; } < $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/bin/acroread; \
+	chmod 755 $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/bin/acroread; \
+	{ rm $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/Resource/Shell/acroread_tab; awk 'NR==2{print "if ! type _filedir &> /dev/null ; then"}1' > $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/Resource/Shell/acroread_tab; } < $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/Resource/Shell/acroread_tab; \
+	sed -i '0,/^}/s/^}/}\nfi/' $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/Resource/Shell/acroread_tab
+
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_link
+	dh_installdebconf
+#	dh_strip
+	dh_lintian
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_shlibdeps -XSynchronizerApp-binary -XEFS.api -XdrvOpenGL -l $(CURDIR)/debian/acroread-bin/opt/Adobe/Reader9/Reader/intellinux/lib/ -- -v
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure
