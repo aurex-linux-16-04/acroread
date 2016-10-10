@@ -1,3 +1,9 @@
+acroread (9.5.5-1xenial~aurex1) xenial; urgency=medium
+
+  * Rebuild for aurex 16.04 (xenial)
+
+ -- Luis Antonio Garcia Gisbert <luisgg@gmail.com>  Mon, 10 Oct 2016 18:46:38 +0200
+
 acroread (9.5.5-1trusty~aurex1) trusty; urgency=medium
 
   * Rebuild for aurex 14.04 (trusty)
