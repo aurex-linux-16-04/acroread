@@ -1,3 +1,9 @@
+acroread (9.5.5-1xenial~aurex3) xenial; urgency=medium
+
+  * Fixed depends for amd64 architecture
+
+ -- Luis Antonio Garcia Gisbert <luisgg@gmail.com>  Tue, 11 Oct 2016 08:26:53 +0200
+
 acroread (9.5.5-1xenial~aurex2) xenial; urgency=medium
 
   * Dummy upgrade

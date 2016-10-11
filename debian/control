@@ -22,7 +22,7 @@ Standards-Version: 3.9.2
 Package: acroread
 Architecture: i386 amd64
 Depends: ${misc:Depends},
-	acroread-bin,
+	acroread-bin:i386,
 	nspluginwrapper [amd64]
 Description: Adobe Reader
  Adobe Reader allows you to view navigate and print PDF files. This version
